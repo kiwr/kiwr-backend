@@ -4,5 +4,19 @@
   "main": "index.js",
   "repository": "https://github.com/kiwr/kiwr-backend.git",
   "author": "Bruno Ricardo Secco <brunodvic3@hotmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.4.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-prettier": "^3.1.0",
+    "nodemon": "^1.19.2",
+    "prettier": "^1.18.2",
+    "sucrase": "^3.10.1"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "yup": "^0.27.0"
+  }
 }
