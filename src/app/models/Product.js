@@ -15,6 +15,10 @@ const ProductSchema = new mongoose.Schema(
       required: [true, 'Serial number not informed'],
       type: String,
     },
+    flag: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     collection: 'products',
