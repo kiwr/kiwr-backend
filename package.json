@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "build": "sucrase ./src -d ./dist --transforms imports",
-    "start": "yarn build && node dist/server.js"
+    "start": "node dist/server.js"
   },
   "devDependencies": {
     "eslint": "^6.4.0",
