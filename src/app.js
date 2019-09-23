@@ -11,10 +11,6 @@ class App {
     this.middlewares();
     this.routes();
     this.server.use(cors());
-    /* mongoose.connect(process.env.MONGO_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }); */
     this.connect();
   }
 
