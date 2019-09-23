@@ -10,7 +10,6 @@ class App {
     this.server = express();
     this.middlewares();
     this.routes();
-    this.server.use(cors());
     this.connect();
   }
 
@@ -19,6 +18,7 @@ class App {
   }
 
   routes() {
+    this.server.use(cors());
     this.server.use(routes);
   }
 

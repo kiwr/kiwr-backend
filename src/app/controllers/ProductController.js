@@ -19,6 +19,14 @@ class ProductController {
         .json({ success: false, errorMessage: 'Validation error' });
     }
 
+    const { size } = req.query;
+
+    if (!size) {
+      return res
+        .status(400)
+        .json({ success: false, errorMessage: 'Params does not exists' });
+    }
+
     const { name, desc, lot } = req.body;
 
     const lotExists = await Product.find({ lot: lot });
@@ -27,14 +35,6 @@ class ProductController {
       return res
         .status(400)
         .json({ success: false, errorMessage: 'Lot already exists' });
-    }
-
-    const { size } = req.query;
-
-    if (!size) {
-      return res
-        .status(400)
-        .json({ success: false, errorMessage: 'Params does not exists' });
     }
 
     let codes = [];
