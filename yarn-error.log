@@ -36,6 +36,7 @@ npm manifest:
     "license": "MIT",
     "scripts": {
       "dev": "nodemon src/server.js",
+      "build": "sucrase ./src -d ./dist --transforms imports",
       "start": "node src/server.js"
     },
     "devDependencies": {
@@ -45,7 +46,8 @@ npm manifest:
       "eslint-plugin-import": "^2.18.2",
       "eslint-plugin-prettier": "^3.1.0",
       "nodemon": "^1.19.2",
-      "prettier": "^1.18.2"
+      "prettier": "^1.18.2",
+      "sucrase": "^3.10.1"
     },
     "dependencies": {
       "cors": "^2.8.5",
@@ -54,8 +56,8 @@ npm manifest:
       "jsonwebtoken": "^8.5.1",
       "mongoose": "^5.7.1",
       "uuid": "^3.3.3",
-      "yup": "^0.27.0",
-      "sucrase": "^3.10.1"
+      "yup": "^0.27.0"
+  
     }
   }
 
