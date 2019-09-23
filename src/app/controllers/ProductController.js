@@ -70,22 +70,24 @@ class ProductController {
 
     const product = await Product.findOne({ serialNumber: serialDecoded });
 
-    if (product.flag) {
+    if (!product.flag) {
       const { name, desc, lot, serialNumber } = product;
       return res.status(201).json({
         success: true,
         errorMessage: '',
         product: { name, desc, lot, serialNumber },
         message: 'Produto já foi autenticado anteriormente!',
+        flag: false,
       });
     } else {
       const { name, desc, lot, serialNumber } = product;
-      await Product.updateOne({ serialNumber }, { flag: true });
+      await Product.updateOne({ serialNumber }, { flag: false });
       return res.status(201).json({
         success: true,
         errorMessage: '',
         product: { name, desc, lot, serialNumber },
         message: 'Você autenticou este produto!',
+        flag: true,
       });
     }
   }
