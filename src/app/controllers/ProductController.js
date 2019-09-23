@@ -75,9 +75,14 @@ class ProductController {
       return res.status(201).json({
         success: true,
         errorMessage: '',
-        product: { name, desc, lot, serialNumber },
-        message: 'Produto já foi autenticado anteriormente!',
-        flag: false,
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: false,
+          message: "'Produto já foi autenticado anteriormente!'",
+        },
       });
     } else {
       const { name, desc, lot, serialNumber } = product;
@@ -85,9 +90,14 @@ class ProductController {
       return res.status(201).json({
         success: true,
         errorMessage: '',
-        product: { name, desc, lot, serialNumber },
-        message: 'Você autenticou este produto!',
-        flag: true,
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: true,
+          message: 'Você autenticou este produto agora!',
+        },
       });
     }
   }
