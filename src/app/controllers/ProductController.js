@@ -16,15 +16,16 @@ class ProductController {
     if (!(await schema.isValid(req.body))) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Validation error' });
+        .json({ success: false, errorMessage: 'Erro de validação de dados!' });
     }
 
     const { size } = req.query;
 
     if (!size) {
-      return res
-        .status(400)
-        .json({ success: false, errorMessage: 'Params does not exists' });
+      return res.status(400).json({
+        success: false,
+        errorMessage: 'Parametros de requisição não informados!',
+      });
     }
 
     const { name, desc, lot } = req.body;
@@ -34,7 +35,7 @@ class ProductController {
     if (lotExists.length !== 0) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Lot already exists' });
+        .json({ success: false, errorMessage: 'Este lote já existe!' });
     }
 
     let codes = [];
@@ -51,9 +52,10 @@ class ProductController {
     const { token } = req.body;
 
     if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, errorMessage: 'token does not found' });
+      return res.status(401).json({
+        success: false,
+        errorMessage: 'Token não foi encontrado na requisição!',
+      });
     }
 
     let serialDecoded;
@@ -65,7 +67,7 @@ class ProductController {
       );
       serialDecoded = decoded.serialNumber;
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Toke inválido!' });
     }
 
     const product = await Product.findOne({ serialNumber: serialDecoded });
@@ -100,6 +102,27 @@ class ProductController {
         },
       });
     }
+  }
+
+  async readAll(req, res) {
+    let productMap = [];
+    let productList;
+
+    try {
+      productList = await Product.find({});
+    } catch (err) {
+      return res
+        .status(400)
+        .json({ success: false, errorMessage: 'Falha ao recuperar dados' });
+    }
+
+    productList.map(product => {
+      let serialNumber = product.serialNumber;
+      productMap.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
+    });
+    return res
+      .status(200)
+      .json({ success: true, errorMessage: '', products: productMap });
   }
 }
 
