@@ -5,5 +5,6 @@ const routes = new (0, _express.Router)();
 
 routes.post('/create', _ProductController2.default.store);
 routes.post('/read', _ProductController2.default.read);
+routes.get('/readAll', _ProductController2.default.readAll);
 
 exports. default = routes;

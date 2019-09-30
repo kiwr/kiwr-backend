@@ -16,7 +16,16 @@ class ProductController {
     if (!(await schema.isValid(req.body))) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Validation error' });
+        .json({ success: false, errorMessage: 'Erro de validação de dados!' });
+    }
+
+    const { size } = req.query;
+
+    if (!size) {
+      return res.status(400).json({
+        success: false,
+        errorMessage: 'Parametros de requisição não informados!',
+      });
     }
 
     const { name, desc, lot } = req.body;
@@ -26,15 +35,7 @@ class ProductController {
     if (lotExists.length !== 0) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Lot already exists' });
-    }
-
-    const { size } = req.query;
-
-    if (!size) {
-      return res
-        .status(400)
-        .json({ success: false, errorMessage: 'Params does not exists' });
+        .json({ success: false, errorMessage: 'Este lote já existe!' });
     }
 
     let codes = [];
@@ -51,9 +52,10 @@ class ProductController {
     const { token } = req.body;
 
     if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, errorMessage: 'token does not found' });
+      return res.status(401).json({
+        success: false,
+        errorMessage: 'Token não foi encontrado na requisição!',
+      });
     }
 
     let serialDecoded;
@@ -65,29 +67,62 @@ class ProductController {
       );
       serialDecoded = decoded.serialNumber;
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Toke inválido!' });
     }
 
     const product = await _Product2.default.findOne({ serialNumber: serialDecoded });
 
-    if (product.flag) {
+    if (!product.flag) {
       const { name, desc, lot, serialNumber } = product;
       return res.status(201).json({
         success: true,
         errorMessage: '',
-        product: { name, desc, lot, serialNumber },
-        message: 'Produto já foi autenticado anteriormente!',
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: false,
+          message: "'Produto já foi autenticado anteriormente!'",
+        },
       });
     } else {
       const { name, desc, lot, serialNumber } = product;
-      await _Product2.default.updateOne({ serialNumber }, { flag: true });
+      await _Product2.default.updateOne({ serialNumber }, { flag: false });
       return res.status(201).json({
         success: true,
         errorMessage: '',
-        product: { name, desc, lot, serialNumber },
-        message: 'Você autenticou este produto!',
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: true,
+          message: 'Você autenticou este produto agora!',
+        },
       });
     }
+  }
+
+  async readAll(req, res) {
+    let productMap = [];
+    let productList;
+
+    try {
+      productList = await _Product2.default.find({});
+    } catch (err) {
+      return res
+        .status(400)
+        .json({ success: false, errorMessage: 'Falha ao recuperar dados' });
+    }
+
+    productList.map(product => {
+      let serialNumber = product.serialNumber;
+      productMap.push(_jsonwebtoken2.default.sign({ serialNumber }, process.env.CRYPTO_KEY));
+    });
+    return res
+      .status(200)
+      .json({ success: true, errorMessage: '', products: productMap });
   }
 }
 

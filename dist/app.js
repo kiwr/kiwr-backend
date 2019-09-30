@@ -10,7 +10,6 @@ class App {
     this.server = _express2.default.call(void 0, );
     this.middlewares();
     this.routes();
-    this.server.use(_cors2.default.call(void 0, ));
     this.connect();
   }
 
@@ -19,6 +18,7 @@ class App {
   }
 
   routes() {
+    this.server.use(_cors2.default.call(void 0, ));
     this.server.use(_routes2.default);
   }
 

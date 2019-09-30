@@ -16,8 +16,9 @@ const ProductSchema = new _mongoose2.default.Schema(
       type: String,
     },
     flag: {
+      required: [true, 'flag not informed'],
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   {
