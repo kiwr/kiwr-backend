@@ -16,34 +16,49 @@ class ProductController {
     if (!(await schema.isValid(req.body))) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Erro de validação de dados!' });
+        .json({ success: false, errorMessage: 'Validation error' });
+    }
+
+    const { name, desc, lot } = req.body;
+
+    let existsLot;
+    try {
+      existsLot = await Lot.find({ lot: lot });
+    } catch (err) {
+      console.log(err);
+    }
+    if (existsLot.length === 0) {
+      try {
+        let newLot = await Lot.create({ lot });
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     const { size } = req.query;
 
     if (!size) {
-      return res.status(400).json({
-        success: false,
-        errorMessage: 'Parametros de requisição não informados!',
-      });
-    }
-
-    const { name, desc, lot } = req.body;
-
-    const lotExists = await Product.find({ lot: lot });
-
-    if (lotExists.length !== 0) {
       return res
         .status(400)
-        .json({ success: false, errorMessage: 'Este lote já existe!' });
+        .json({ success: false, errorMessage: 'Params does not exists' });
     }
 
     let codes = [];
 
     for (var i = 0; i < size; i++) {
       const serialNumber = uuidv1();
-      await Product.create({ name, desc, lot, serialNumber });
-      codes.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
+
+      try {
+        let newProduct = await Product.create({
+          name,
+          desc,
+          lot,
+          serialNumber,
+        });
+        codes.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
+      } catch (err) {
+        return res.status(400).json({ success: false, errorMessage: err });
+      }
     }
     return res.status(201).json({ success: true, errorMessage: '', codes });
   }
