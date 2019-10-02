@@ -2,6 +2,7 @@ import * as Yup from 'yup';
 import uuidv1 from 'uuid/v1';
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
+import mongoose from 'mongoose';
 
 import Product from '../models/Product';
 import Lot from '../models/Lot';
@@ -22,20 +23,6 @@ class ProductController {
 
     const { name, desc, lot } = req.body;
 
-    let existsLot;
-    try {
-      existsLot = await Lot.find({ lot: lot });
-    } catch (err) {
-      console.log(err);
-    }
-    if (existsLot.length === 0) {
-      try {
-        let newLot = await Lot.create({ lot });
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
     const { size } = req.query;
 
     if (!size) {
@@ -43,25 +30,63 @@ class ProductController {
         .status(400)
         .json({ success: false, errorMessage: 'Params does not exists' });
     }
-
-    let codes = [];
-
-    for (var i = 0; i < size; i++) {
-      const serialNumber = uuidv1();
-
-      try {
-        let newProduct = await Product.create({
-          name,
-          desc,
-          lot,
-          serialNumber,
-        });
-        codes.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
-      } catch (err) {
-        return res.status(400).json({ success: false, errorMessage: err });
-      }
+    //verify lot does exists, if does not, create a new lot without products
+    let existsLot;
+    try {
+      existsLot = await Lot.find({ lot: lot });
+    } catch (err) {
+      console.log(err);
     }
-    return res.status(201).json({ success: true, errorMessage: '', codes });
+
+    if (existsLot.length === 0) {
+      await Lot.create({ lot: lot });
+    }
+    //get the lot and get the product's array length
+    let newLot;
+    try {
+      newLot = await Lot.findOne({ lot: lot });
+    } catch (err) {
+      console.log(err);
+    }
+    let oldLotLength = newLot.products.length + 1;
+    //used to store new jwt tokens
+    let codes = [];
+    //create new products, add they on lot and create jwt tokens
+    for (var i = 0; i < size; i++) {
+      let serialNumber = uuidv1();
+      const newProduct = new Product({
+        _id: mongoose.Types.ObjectId(),
+        name,
+        desc,
+        lot,
+        serialNumber,
+      });
+      newLot.products.push(newProduct);
+
+      codes.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
+    }
+    //update the lot on bd
+    let updateLot;
+    try {
+      updateLot = await Lot.findOneAndUpdate(
+        { lot: lot },
+        { products: newLot.products },
+        { useFindAndModify: false }
+      );
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        errorMessage: err,
+        message: 'Não foi possível cadastrar os produtos',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      errorMessage: '',
+      initialIndex: oldLotLength,
+      products: codes,
+    });
   }
 
   async read(req, res) {
