@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
 
 import Product from '../models/Product';
+import Lot from '../models/Lot';
 
 class ProductController {
   async store(req, res) {
@@ -120,24 +121,53 @@ class ProductController {
   }
 
   async readAll(req, res) {
-    let productMap = [];
     let productList;
+    let lotList;
+    let productsInLots = {};
+
+    try {
+      lotList = await Lot.find({});
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        errorMessage: 'Falha ao recuperar dados de lote',
+      });
+    }
 
     try {
       productList = await Product.find({});
     } catch (err) {
-      return res
-        .status(400)
-        .json({ success: false, errorMessage: 'Falha ao recuperar dados' });
+      return res.status(400).json({
+        success: false,
+        errorMessage: 'Falha ao recuperar dados de produto',
+      });
     }
 
-    productList.map(product => {
-      let serialNumber = product.serialNumber;
-      productMap.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
+    lotList.map(lotItem => {
+      console.log(lotItem.lot, productsInLots);
+      Object.defineProperty(productsInLots, String(lotItem.lot), {
+        value: [],
+        writable: true,
+        enumerable: true,
+      });
     });
+
+    productList.map(product => {
+      var lotExists = productsInLots.hasOwnProperty(product.lot);
+
+      if (lotExists) {
+        console.log('entrei');
+        var serialNumber = product.serialNumber;
+        productsInLots[product.lot].push(
+          jwt.sign({ serialNumber }, process.env.CRYPTO_KEY)
+        );
+        console.log(productsInLots);
+      }
+    });
+
     return res
       .status(200)
-      .json({ success: true, errorMessage: '', products: productMap });
+      .json({ success: true, errorMessage: '', products: productsInLots });
   }
 }
 
