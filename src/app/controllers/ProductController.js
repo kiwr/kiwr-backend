@@ -202,9 +202,17 @@ class ProductController {
         productInLots[property] = [...productInLots[property], jwtCode];
       });
     });
-    return res
+
+    if (isEmpty(productInLots)) {
+      return res
+      .status(200)
+      .json({ success: false, errorMessage: '', });
+    } else {
+      return res
       .status(200)
       .json({ success: true, errorMessage: '', produtos: productInLots });
+    }
+    
   }
 }
 
