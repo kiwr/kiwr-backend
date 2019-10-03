@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 
 import Product from '../models/Product';
 import Lot from '../models/Lot';
+import { throwError } from 'rxjs';
 
 class ProductController {
   async store(req, res) {
@@ -22,7 +23,6 @@ class ProductController {
     }
 
     const { name, desc, lot } = req.body;
-
     const { size } = req.query;
 
     if (!size) {
@@ -31,28 +31,33 @@ class ProductController {
         .json({ success: false, errorMessage: 'Params does not exists' });
     }
     //verify lot does exists, if does not, create a new lot without products
-    let existsLot;
+    let existsLot = [];
     try {
       existsLot = await Lot.find({ lot: lot });
     } catch (err) {
       console.log(err);
     }
 
-    if (existsLot.length === 0) {
-      await Lot.create({ lot: lot });
-    }
-    //get the lot and get the product's array length
     let newLot;
-    try {
-      newLot = await Lot.findOne({ lot: lot });
-    } catch (err) {
-      console.log(err);
+    if (existsLot.length === 0) {
+      try {
+        newLot = await Lot.create({ lot: lot });
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      try {
+        newLot = await Lot.findOne({ lot: lot });
+      } catch (err) {
+        console.log(err);
+      }
     }
-    let oldLotLength = newLot.products.length + 1;
+
+    let oldLotLength = newLot.products.length;
     //used to store new jwt tokens
     let codes = [];
     //create new products, add they on lot and create jwt tokens
-    for (var i = 0; i < size; i++) {
+    for (let i = 0; i < size; i++) {
       let serialNumber = uuidv1();
       const newProduct = new Product({
         _id: mongoose.Types.ObjectId(),
@@ -62,17 +67,13 @@ class ProductController {
         serialNumber,
       });
       newLot.products.push(newProduct);
-
       codes.push(jwt.sign({ serialNumber }, process.env.CRYPTO_KEY));
     }
-    //update the lot on bd
-    let updateLot;
+
+    //update the lot on b
     try {
-      updateLot = await Lot.findOneAndUpdate(
-        { lot: lot },
-        { products: newLot.products },
-        { useFindAndModify: false }
-      );
+      newLot.markModified('products');
+      await newLot.save();
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -90,9 +91,86 @@ class ProductController {
   }
 
   async read(req, res) {
-    const { token } = req.body;
+    const { token } = req.params;
 
     if (!token) {
+      return res.status(401).json({
+        success: false,
+        errorMessage: 'Código de produto não encontrado!',
+      });
+    }
+
+    let serialDecoded;
+
+    try {
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.CRYPTO_KEY
+      );
+      serialDecoded = decoded.serialNumber;
+    } catch (err) {
+      return res.status(401).json({ error: 'Código inválido!' });
+    }
+
+    let product;
+    let productObj;
+    try {
+      productObj = await Lot.findOne({
+        'products.serialNumber': serialDecoded,
+      });
+      let productList = productObj.products;
+      productList.map(productItem => {
+        if (productItem.serialNumber == serialDecoded) {
+          product = productItem;
+        }
+      });
+      if (product == null) {
+        throw 'Product not found!';
+      }
+    } catch (err) {
+      return res.status(401).json({ success: false, errorMessage: err });
+    }
+
+    if (product.flag) {
+      const { name, desc, lot, serialNumber } = product;
+      productObj.products.forEach(productItem => {
+        if (productItem.serialNumber == serialDecoded) {
+          productItem.flag = false;
+        }
+      });
+      productObj.markModified('products');
+      await productObj.save();
+      console.log(productObj);
+      return res.status(201).json({
+        success: true,
+        errorMessage: '',
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: true,
+          message: 'Você autenticou este produto agora!',
+        },
+      });
+    } else {
+      const { name, desc, lot, serialNumber } = product;
+
+      return res.status(201).json({
+        success: true,
+        errorMessage: '',
+        product: {
+          name,
+          desc,
+          lot,
+          serialNumber,
+          flag: false,
+          message: 'Produto já foi autenticado anteriormente!',
+        },
+      });
+    }
+
+    /* if (!token) {
       return res.status(401).json({
         success: false,
         errorMessage: 'Token não foi encontrado na requisição!',
@@ -142,7 +220,7 @@ class ProductController {
           message: 'Você autenticou este produto agora!',
         },
       });
-    }
+    } */
   }
 
   async readAll(req, res) {

@@ -9,7 +9,7 @@ const LotSchema = new mongoose.Schema(
       required: [true, 'Lot not informed'],
       type: String,
     },
-    products: [Product.schema],
+    products: Array,
   },
   {
     collection: 'lots',
