@@ -6,7 +6,6 @@ var _mongoose = require('mongoose'); var _mongoose2 = _interopRequireDefault(_mo
 
 var _Product = require('../models/Product'); var _Product2 = _interopRequireDefault(_Product);
 var _Lot = require('../models/Lot'); var _Lot2 = _interopRequireDefault(_Lot);
-var _rxjs = require('rxjs');
 
 class ProductController {
   async store(req, res) {
