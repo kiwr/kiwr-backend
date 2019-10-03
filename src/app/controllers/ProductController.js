@@ -140,7 +140,6 @@ class ProductController {
       });
       productObj.markModified('products');
       await productObj.save();
-      console.log(productObj);
       return res.status(201).json({
         success: true,
         errorMessage: '',
@@ -169,108 +168,44 @@ class ProductController {
         },
       });
     }
-
-    /* if (!token) {
-      return res.status(401).json({
-        success: false,
-        errorMessage: 'Token não foi encontrado na requisição!',
-      });
-    }
-
-    let serialDecoded;
-
-    try {
-      const decoded = await promisify(jwt.verify)(
-        token,
-        process.env.CRYPTO_KEY
-      );
-      serialDecoded = decoded.serialNumber;
-    } catch (err) {
-      return res.status(401).json({ error: 'Toke inválido!' });
-    }
-
-    const product = await Product.findOne({ serialNumber: serialDecoded });
-
-    if (!product.flag) {
-      const { name, desc, lot, serialNumber } = product;
-      return res.status(201).json({
-        success: true,
-        errorMessage: '',
-        product: {
-          name,
-          desc,
-          lot,
-          serialNumber,
-          flag: false,
-          message: "'Produto já foi autenticado anteriormente!'",
-        },
-      });
-    } else {
-      const { name, desc, lot, serialNumber } = product;
-      await Product.updateOne({ serialNumber }, { flag: false });
-      return res.status(201).json({
-        success: true,
-        errorMessage: '',
-        product: {
-          name,
-          desc,
-          lot,
-          serialNumber,
-          flag: true,
-          message: 'Você autenticou este produto agora!',
-        },
-      });
-    } */
   }
 
   async readAll(req, res) {
-    let productList;
-    let lotList;
-    let productsInLots = {};
-
+    let allLot;
     try {
-      lotList = await Lot.find({});
+      allLot = await Lot.find();
     } catch (err) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        errorMessage: 'Falha ao recuperar dados de lote',
+        errorMessage: err,
+        message: 'Não foi possível encontrar os produtos',
       });
     }
 
-    try {
-      productList = await Product.find({});
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        errorMessage: 'Falha ao recuperar dados de produto',
-      });
-    }
+    let arrayLots = [];
+    allLot.map(lotItem => {
+      arrayLots.push(lotItem);
+    });
 
-    lotList.map(lotItem => {
-      console.log(lotItem.lot, productsInLots);
-      Object.defineProperty(productsInLots, String(lotItem.lot), {
+    let productInLots = {};
+    arrayLots.map(lotItem => {
+      let property = String(lotItem.lot);
+      Object.defineProperty(productInLots, property, {
         value: [],
         writable: true,
         enumerable: true,
       });
-    });
-
-    productList.map(product => {
-      var lotExists = productsInLots.hasOwnProperty(product.lot);
-
-      if (lotExists) {
-        console.log('entrei');
-        var serialNumber = product.serialNumber;
-        productsInLots[product.lot].push(
-          jwt.sign({ serialNumber }, process.env.CRYPTO_KEY)
+      lotItem.products.map(product => {
+        let jwtCode = jwt.sign(
+          { serialNumber: product.serialNumber },
+          process.env.CRYPTO_KEY
         );
-        console.log(productsInLots);
-      }
+        productInLots[property] = [...productInLots[property], jwtCode];
+      });
     });
-
     return res
       .status(200)
-      .json({ success: true, errorMessage: '', products: productsInLots });
+      .json({ success: true, errorMessage: '', produtos: productInLots });
   }
 }
 
