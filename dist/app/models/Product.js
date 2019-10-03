@@ -2,6 +2,7 @@
 
 const ProductSchema = new _mongoose2.default.Schema(
   {
+    _id: _mongoose2.default.Types.ObjectId,
     name: {
       required: [true, 'Name not informed'],
       type: String,
