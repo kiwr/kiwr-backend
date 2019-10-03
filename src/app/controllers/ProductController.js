@@ -6,7 +6,6 @@ import mongoose from 'mongoose';
 
 import Product from '../models/Product';
 import Lot from '../models/Lot';
-import { throwError } from 'rxjs';
 
 class ProductController {
   async store(req, res) {
