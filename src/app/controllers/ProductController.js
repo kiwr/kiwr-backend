@@ -203,16 +203,16 @@ class ProductController {
       });
     });
 
-    if (isEmpty(productInLots)) {
-      return res
-      .status(200)
-      .json({ success: false, errorMessage: '', });
+    if (
+      Object.entries(productInLots).length === 0 &&
+      productInLots.constructor === Object
+    ) {
+      return res.status(200).json({ success: false, errorMessage: '' });
     } else {
       return res
-      .status(200)
-      .json({ success: true, errorMessage: '', produtos: productInLots });
+        .status(200)
+        .json({ success: true, errorMessage: '', produtos: productInLots });
     }
-    
   }
 }
 
